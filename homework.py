@@ -1,6 +1,8 @@
-from typing import Dict
+from typing import Dict, Type
+from dataclasses import dataclass
 
 
+@dataclass
 class InfoMessage:
     """Информационное сообщение о тренировке."""
 
@@ -28,12 +30,13 @@ class InfoMessage:
         )
 
 
+@dataclass
 class Training:
     """Базовый класс тренировки."""
 
     M_IN_KM: int = 1000
     LEN_STEP: float = 0.65
-    min_in_hours: int = 60
+    min_in_hour: int = 60
 
     def __init__(
         self,
@@ -41,9 +44,9 @@ class Training:
         duration: float,
         weight: float,
     ) -> None:
-        self.action = action
-        self.duration = duration
-        self.weight = weight
+        self.action: int = action
+        self.duration: float = duration
+        self.weight: float = weight
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
@@ -55,7 +58,7 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
+        raise NotImplementedError('Нет информации')
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -71,31 +74,29 @@ class Training:
 class Running(Training):
     """Тренировка: бег."""
 
-    coeff_calorie_1 = 18
-    coeff_calorie_2 = 20
-
-    def __init__(self, action: int, duration: float, weight: float) -> None:
-        super().__init__(action, duration, weight)
+    calories_coef_MULTIPLIER_run: int = 18
+    calories_coef_SHIFT_run: int = 20
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         return (
             (
-                self.coeff_calorie_1 * self.get_mean_speed()
-                - self.coeff_calorie_2
-                )
+                self.calories_coef_MULTIPLIER_run * self.get_mean_speed()
+                - self.calories_coef_SHIFT_run
+            )
             * self.weight
             / self.M_IN_KM
             * self.duration
-            * self.min_in_hours
+            * self.min_in_hour
         )
 
 
+@dataclass
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
 
-    coeff_calorie_3: float = 0.035
-    coeff_calorie_4: float = 0.029
+    calories_coef_first_MULTIPLIER_walk: float = 0.035
+    calories_coef_second_MULTIPLIER_walk: float = 0.029
 
     def __init__(
         self, action: int, duration: float, weight: float, height: float
@@ -108,21 +109,22 @@ class SportsWalking(Training):
         mean_speed = self.get_mean_speed()
         return (
             (
-                self.coeff_calorie_3 * self.weight
+                self.calories_coef_first_MULTIPLIER_walk * self.weight
                 + (mean_speed ** 2 // self.height)
-                * self.coeff_calorie_4 * self.weight
+                * self.calories_coef_second_MULTIPLIER_walk * self.weight
             )
             * self.duration
-            * Training.min_in_hours
+            * Training.min_in_hour
         )
 
 
+@dataclass
 class Swimming(Training):
     """Тренировка: плавание."""
 
     LEN_STEP = 1.38
-    coeff_calorie_5 = 1.1
-    coeff_calorie_6 = 2
+    calories_coeff_SUM_swim = 1.1
+    calories_coeff_MULTILPIER_swim = 2
 
     def __init__(
         self,
@@ -146,19 +148,19 @@ class Swimming(Training):
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         return (
-            (self.get_mean_speed() + self.coeff_calorie_5)
-            * self.coeff_calorie_6
+            (self.get_mean_speed() + self.calories_coeff_SUM_swim)
+            * self.calories_coeff_MULTILPIER_swim
             * self.weight
         )
 
 
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные полученные от датчиков."""
-    workout_types: Dict = {
+    workout_types: Dict[str, Type[Training]] = {
         "RUN": Running, "WLK": SportsWalking, "SWM": Swimming
-        }
+    }
     if workout_type not in workout_types:
-        raise ValueError("Нет такого типа тренеровки")
+        raise ValueError(f'Нет данных для {workout_type}')
     return workout_types[workout_type](*data)
 
 
