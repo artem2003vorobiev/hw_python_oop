@@ -30,13 +30,12 @@ class InfoMessage:
         )
 
 
-@dataclass
 class Training:
     """Базовый класс тренировки."""
 
     M_IN_KM: int = 1000
     LEN_STEP: float = 0.65
-    min_in_hour: int = 60
+    MIN_IN_HOUR: int = 60
 
     def __init__(
         self,
@@ -58,7 +57,10 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        raise NotImplementedError('Нет информации')
+        raise NotImplementedError(
+            f'''Метод get_spent_calories не определён в классе
+            {type(self).__name__}'''
+        )
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -74,29 +76,28 @@ class Training:
 class Running(Training):
     """Тренировка: бег."""
 
-    calories_coef_MULTIPLIER_run: int = 18
-    calories_coef_SHIFT_run: int = 20
+    CALORIES_COEF_MULTIPLIER: int = 18
+    CALORIES_COEF_SHIFT: int = 20
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         return (
             (
-                self.calories_coef_MULTIPLIER_run * self.get_mean_speed()
-                - self.calories_coef_SHIFT_run
+                self.CALORIES_COEF_MULTIPLIER * self.get_mean_speed()
+                - self.CALORIES_COEF_SHIFT
             )
             * self.weight
             / self.M_IN_KM
             * self.duration
-            * self.min_in_hour
+            * self.MIN_IN_HOUR
         )
 
 
-@dataclass
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
 
-    calories_coef_first_MULTIPLIER_walk: float = 0.035
-    calories_coef_second_MULTIPLIER_walk: float = 0.029
+    CALROIES_COEF_FIRST_MULTIPLIER: float = 0.035
+    CALORIES_COEF_SECOND_MULTIPLIER: float = 0.029
 
     def __init__(
         self, action: int, duration: float, weight: float, height: float
@@ -109,22 +110,21 @@ class SportsWalking(Training):
         mean_speed = self.get_mean_speed()
         return (
             (
-                self.calories_coef_first_MULTIPLIER_walk * self.weight
+                self.CALROIES_COEF_FIRST_MULTIPLIER * self.weight
                 + (mean_speed ** 2 // self.height)
-                * self.calories_coef_second_MULTIPLIER_walk * self.weight
+                * self.CALORIES_COEF_SECOND_MULTIPLIER * self.weight
             )
             * self.duration
-            * Training.min_in_hour
+            * Training.MIN_IN_HOUR
         )
 
 
-@dataclass
 class Swimming(Training):
     """Тренировка: плавание."""
 
-    LEN_STEP = 1.38
-    calories_coeff_SUM_swim = 1.1
-    calories_coeff_MULTILPIER_swim = 2
+    LEN_STEP: float = 1.38
+    CALORIES_COEFF_SUM: float = 1.1
+    CALORIES_COEFF_MULTILPIER: int = 2
 
     def __init__(
         self,
@@ -148,8 +148,8 @@ class Swimming(Training):
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
         return (
-            (self.get_mean_speed() + self.calories_coeff_SUM_swim)
-            * self.calories_coeff_MULTILPIER_swim
+            (self.get_mean_speed() + self.CALORIES_COEFF_SUM)
+            * self.CALORIES_COEFF_MULTILPIER
             * self.weight
         )
 
@@ -160,7 +160,10 @@ def read_package(workout_type: str, data: list) -> Training:
         "RUN": Running, "WLK": SportsWalking, "SWM": Swimming
     }
     if workout_type not in workout_types:
-        raise ValueError(f'Нет данных для {workout_type}')
+        raise ValueError(
+            f'''Нет подходящего типа тренировки для {workout_type}.
+            Доступные типы: {workout_types.keys()}'''
+        )
     return workout_types[workout_type](*data)
 
 
